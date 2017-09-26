@@ -8,7 +8,9 @@ profile = Blueprint('profile', __name__)
 
 # engine = create_engine('mysql://root:rootroot@localhost/recommended_shorttv')
 # metadata = MetaData(engine)
-
+engine = create_engine('mysql+pymysql://root:rootroot@localhost/recommended_shorttv')
+Base = declarative_base()
+Base.metadata.bind = engine
 class RecommendedMovies(Base):
 	
 	__tablename__ = 'recommended_movies'
@@ -20,7 +22,7 @@ class RecommendedMovies(Base):
 def loadSession():
 	""""""    
 	#dbPath = 'places.sqlite'
-	engine = create_engine('mysql://root:rootroot@localhost/recommended_shorttv')
+	
  
 	metadata = Base.metadata
 	Session = sessionmaker(bind=engine)
@@ -55,4 +57,5 @@ tasks = [
 def get_movies():
 	
 	result = session.query(RecommendedMovies).limit(2).all()
+	print ("result",result)
 	return jsonify({'movies': result})
