@@ -1,16 +1,48 @@
+import os
+import sys
+import configparser
+
+
 from flask import Blueprint, render_template, jsonify
-#from app import db
+from flask import Flask, flash, redirect, render_template, request, session, abort
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+
+
+config = configparser.ConfigParser()
+config.readfp(open(r'config.txt'))
+
+rating_file = config.get('FILE-CONFIG', 'rating_file')
+movie_file = config.get('FILE-CONFIG', 'movie_file')
+user_file = config.get('FILE-CONFIG', 'user_file')
+
+
+##Db info
+HOST = config.get('DB-PRODUCTION', 'HOST')
+USER = config.get('DB-PRODUCTION', 'USER')
+PASSWD = config.get('DB-PRODUCTION', 'PASSWD')
+DB = config.get('DB-PRODUCTION', 'DB')
+
+
+
+#from app import db
  
+
+
+
 profile = Blueprint('profile', __name__)
 
 # engine = create_engine('mysql://root:rootroot@localhost/recommended_shorttv')
 # metadata = MetaData(engine)
-engine = create_engine('mysql+pymysql://root:rootroot@localhost/recommended_shorttv')
+engine = create_engine('mysql+pymysql://{0}:{1}@{2}/{3}'.format(USER, PASSWD, HOST, DB))
+
 Base = declarative_base()
 Base.metadata.bind = engine
+
+
+
 class RecommendedMovies(Base):
 	
 	__tablename__ = 'recommended_movies'
@@ -26,11 +58,11 @@ def loadSession():
  
 	metadata = Base.metadata
 	Session = sessionmaker(bind=engine)
-	session = Session()
-	return session
+	db_session = Session()
+	return db_session
 	#return session
 
-session = loadSession()
+db_session = loadSession()
 
 # @profile.route("/sandeep")
 # def hello_sandeep():
@@ -38,24 +70,38 @@ session = loadSession()
 
 #print "this is db functions",dir(db)
 
-tasks = [
-	{
-		'id': 1,
-		'title': u'Buy groceries',
-		'description': u'Milk, Cheese, Pizza, Fruit, Tylenol', 
-		'done': False
-	},
-	{
-		'id': 2,
-		'title': u'Learn Python',
-		'description': u'Need to find a good Python tutorial on the web', 
-		'done': False
-	}
-]
 
-@profile.route('/todo/api/v1.0/user', methods=['GET'])
-def get_movies():
+@profile.route('/todo/api/v1.0/recommended_movies', methods=['GET'])
+def get_recommended_movies_to_users():
+	user_dict={}
+	result = db_session.query(RecommendedMovies).all()
+	for i in result:
+		user_dict.update({i.user_id:i.movies})
+	return user_dict
+
+
+@profile.route('/todo/api/v1.0/user/<int:user_id>', methods=['GET'])
+def get_recommended_movies_to_specific_user(user_id = None):
+	user_dict={}
+	if user_id:
+		result = db_session.query(RecommendedMovies).filter(RecommendedMovies.user_id == user_id).all()
+		for i in result:
+			user_dict.update({i.user_id:i.movies})
+	return user_dict
+
+
+@profile.route('/')
+def home():
 	
-	result = session.query(RecommendedMovies).limit(2).all()
-	print ("result",result)
-	return jsonify({'movies': result})
+	if not session.get('logged_in'):
+		return render_template('login.html')
+	else:
+		return "Hello Boss!"
+
+
+@profile.route('/login', methods=['POST'])
+def do_admin_login():
+	if request.form['password'] == 'password' and request.form['username'] == 'admin':
+		session['logged_in'] = True
+	else:
+		return render_template('index.html')

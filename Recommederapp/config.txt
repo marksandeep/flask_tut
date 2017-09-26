@@ -1,0 +1,32 @@
+[DB-CONFIG]
+HOST=localhost
+USER=root
+PASSWD=rootroot
+DB=recommended_shorttv
+
+
+[DB-PRODUCTION]
+HOST=162.209.6.198
+USER=shortstv
+PASSWD=shotrtvgR
+DB=shortstv
+
+
+
+[FILE-CONFIG]
+rating_file = rating_info.csv
+movie_file = movie_info.csv
+user_file = user_info.csv
+
+
+[SPARK-CONFIG]
+
+spark_path = /home/sandeep/spark
+
+
+
+
+[MONGO-COFIG]
+MONGO_HOST = shortstv.icreondemoserver.com
+MONGO_DB = reporting
+MONGO_PORT = 27017
